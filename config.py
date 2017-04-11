@@ -10,19 +10,19 @@ class Config(object):
     DEBUG = False
     TESTING = False
     CSRF_ENABLED = True
-    SECRET_KEY = 'the-secret-secret-k3y'
-    SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
 
 
 class TestingConfig(Config):
     DEBUG = True
     TESTING = True
     SQLALCHEMY_ECHO = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite:////' + basedir + '/tests' + '/bucketlist_test.sqlite'
 
 
 class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_ECHO = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite:////' + basedir + '/app' + '/bucketlist.sqlite'
 
 
 class ProductionConfig(Config):
@@ -32,5 +32,6 @@ class ProductionConfig(Config):
 
 app_config = {
     'development': DevelopmentConfig,
+    'testing': TestingConfig,
     'production': ProductionConfig
 }
