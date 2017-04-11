@@ -15,7 +15,8 @@ class Config(object):
 class TestingConfig(Config):
     DEBUG = True
     TESTING = True
-    SQLALCHEMY_ECHO = True
+    SQLALCHEMY_ECHO = False
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = 'sqlite:////' + basedir + '/tests' + '/bucketlist_test.sqlite'
 
 
