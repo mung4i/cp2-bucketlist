@@ -1,6 +1,7 @@
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, timedelta
+import jwt
 
 
 from app import db, login_manager
@@ -8,7 +9,7 @@ from app import db, login_manager
 
 class User(UserMixin, db.Model):
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     email = db.Column(db.String(255), index=True, unique=True)
     username = db.Column(db.String(25), index=True, unique=True)
     first_name = db.Column(db.String(25), index=True)
@@ -22,6 +23,38 @@ class User(UserMixin, db.Model):
         self.first_name = first_name
         self.last_name = last_name
         self.password = password
+
+    def encode_auth_token(self, user_id):
+        """
+        Generates auth token
+        """
+        try:
+            payload = {
+                'exp': datetime.now() + timedelta(days=0,
+                                                  seconds=5),
+                'iat': datetime.now(),
+                'sub': user_id
+            }
+            return jwt.encode(
+                payload,
+                'the-secret-secret-k3y',
+                algorithm='HS256'
+            )
+        except Exception as e:
+            return e
+
+    @staticmethod
+    def decode_auth_token(auth_token):
+        """
+        Decodes auth token
+        """
+        try:
+            payload = jwt.decode(auth_token, 'the-secret-secret-k3y'),
+            return payload['sub']
+        except jwt.ExpiredSignatureError:
+            return 'Token has expired. Please log in to continue.'
+        except jwt.InvalidTokenError:
+            return 'Invalid token. Log in to continue.'
 
 
 @property
