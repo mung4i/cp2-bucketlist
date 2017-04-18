@@ -6,7 +6,7 @@ from app import create_app, db
 from app.models import User
 
 
-class TestBucketListAPI(unittest.TestCase):
+class BucketlistAPITestCase(unittest.TestCase):
 
     def setUp(self):
         create_app('testing').app_context().push()
@@ -92,10 +92,64 @@ class TestBucketListAPI(unittest.TestCase):
                        'date_created': now.isoformat(),
                        'date_modified': now.isoformat(),
                        'done': False}
-            response = self.client.post("v1/bucketlists/<id>/items/",
+            response = self.client.post("v1/bucketlists/1/items/",
                                         data=json.dumps(payload),
                                         headers={
                                             'Content-Type': 'application/json',
                                             'Authorization': self.test_token
                                         })
+            self.assertEqual(response.status_code, 201)
+
+    def test_if_user_can_update_a_bucketlist_items(self):
+        with self.client:
+            now = datetime.datetime.now()
+            # Create a bucket list
+            payload = {'title': '2010',
+                       'date_created': now.isoformat(),
+                       'date_modified': now.isoformat()
+                       }
+            self.client.post("v1/bucketlists/", data=json.dumps(payload),
+                             headers={
+                'Content-Type': 'application/json',
+                'Authorization': self.test_token
+            })
+            # Create a bucket list item
+            item_payload = {'name': 'Visit Paris',
+                            'date_created': now.isoformat(),
+                            'date_modified': now.isoformat(),
+                            'done': False
+                            }
+            self.client.post("v1/bucketlists/2/items",
+                             data=json.dumps(item_payload),
+                             headers={
+                                 'Content-Type': 'application/json',
+                                 'Authorization': self.test_token
+                             })
+            # edit the bucket list
+            update_payload = {'name': 'Visit Kampala',
+                              'date_modified': now.isoformat(),
+                              'done': False
+                              }
+            rv = self.client.put("v1/bucketlists/2",
+                                 data=json.dumps(update_payload),
+                                 headers={
+                                     'Content-Type': 'application/json',
+                                     'Authorization': self.test_token
+                                 })
+            self.assertEqual(rv.status_code, 200)
+
+    def test_if_user_can_delete_a_bucketlist_item(self):
+        with self.client:
+            now = datetime.datetime.now()
+            payload = {'name': 'Visit Addis Ababa',
+                       'date_created': now.isoformat(),
+                       'date_modified': now.isoformat(),
+                       'done': False}
+            response = self.client.delete("v1/bucketlists/3/items/",
+                                          data=json.dumps(payload),
+                                          headers={
+                                              'Content-Type':
+                                              'application/json',
+                                              'Authorization': self.test_token
+                                          })
             self.assertEqual(response.status_code, 201)
