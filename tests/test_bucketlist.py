@@ -29,10 +29,11 @@ class TestBucketListAPI(unittest.TestCase):
         db.drop_all()
 
     def test_encode_auth_token(self):
-        test_user = db.session.query(User).filter_by(
-            email='test@bucket.com').first()
-        auth_token = test_user.encode_auth_token(test_user.id)
-        self.assertTrue(isinstance(auth_token, bytes))
+        with self.client:
+            test_user = db.session.query(User).filter_by(
+                email='test@bucket.com').first()
+            auth_token = test_user.encode_auth_token(test_user.id)
+            self.assertTrue(isinstance(auth_token, bytes))
 
     def test_if_a_user_can_register(self):
         with self.client:
@@ -58,29 +59,34 @@ class TestBucketListAPI(unittest.TestCase):
             self.assertEqual(response.status_code, 200,
                              msg='Server not found')
 
+    def test_non_registered_user_login(self):
+        pass
+
     def test_if_user_can_create_a_bucketlist(self):
-        now = datetime.datetime.now()
-        payload = {'title': '2017',
-                   'date_created': now.isoformat(),
-                   'date_modified': now.isoformat()}
-        response = self.client.post("v1/bucketlists/",
-                                    data=json.dumps(payload),
-                                    headers={
-                                        'Content-Type': 'application/json',
-                                        'Authorization': self.test_token
-                                    })
-        self.assertEqual(response.status_code, 201)
+        with self.client:
+            now = datetime.datetime.now()
+            payload = {'title': '2017',
+                       'date_created': now.isoformat(),
+                       'date_modified': now.isoformat()}
+            response = self.client.post("v1/bucketlists/",
+                                        data=json.dumps(payload),
+                                        headers={
+                                            'Content-Type': 'application/json',
+                                            'Authorization': self.test_token
+                                        })
+            self.assertEqual(response.status_code, 201)
 
     def test_if_user_can_create_a_bucketlist_item(self):
-        now = datetime.datetime.now()
-        payload = {'name': 'Visit New York',
-                   'date_created': now.isoformat(),
-                   'date_modified': now.isoformat(),
-                   'done': False}
-        response = self.client.post("v1/bucketlists/<id>/items/",
-                                    data=json.dumps(payload),
-                                    headers={
-                                        'Content-Type': 'application/json',
-                                        'Authorization': self.test_token
-                                    })
-        self.assertEqual(response.status_code, 201)
+        with self.client:
+            now = datetime.datetime.now()
+            payload = {'name': 'Visit New York',
+                       'date_created': now.isoformat(),
+                       'date_modified': now.isoformat(),
+                       'done': False}
+            response = self.client.post("v1/bucketlists/<id>/items/",
+                                        data=json.dumps(payload),
+                                        headers={
+                                            'Content-Type': 'application/json',
+                                            'Authorization': self.test_token
+                                        })
+            self.assertEqual(response.status_code, 201)
