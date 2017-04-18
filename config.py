@@ -17,13 +17,15 @@ class TestingConfig(Config):
     TESTING = True
     SQLALCHEMY_ECHO = False
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_DATABASE_URI = 'sqlite:////' + basedir + '/tests' + '/bucketlist_test.sqlite'
+    SQLALCHEMY_DATABASE_URI = 'sqlite:////' + basedir + '/tests' +\
+        '/bucketlist_test.sqlite'
 
 
 class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_ECHO = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:////' + basedir + '/app' + '/bucketlist.sqlite'
+    SQLALCHEMY_DATABASE_URI = 'sqlite:////' + basedir + '/app' +\
+        '/bucketlist.sqlite'
 
 
 class ProductionConfig(Config):
