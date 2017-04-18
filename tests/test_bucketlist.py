@@ -59,8 +59,17 @@ class TestBucketListAPI(unittest.TestCase):
             self.assertEqual(response.status_code, 200,
                              msg='Server not found')
 
-    def test_non_registered_user_login(self):
-        pass
+    def test_non_registered_user_can_login(self):
+        with self.client:
+            payload = {
+                'email': 'danielwangai@gmail.com',
+                'password': 'swordpas'
+            }
+            response = self.client.post("/v1/auth/login",
+                                        data=json.dumps(payload),
+                                        content_type='application/json')
+            self.assertEqual(response.status_code, 404,
+                             msg='User not registered')
 
     def test_if_user_can_create_a_bucketlist(self):
         with self.client:
