@@ -2,8 +2,8 @@ import datetime
 import json
 import unittest
 
-from app import create_app, db
-from app.models import User
+from bucketlist import create_app, db
+from bucketlist.models import User
 
 
 class BucketlistAPITestCase(unittest.TestCase):
@@ -37,11 +37,13 @@ class BucketlistAPITestCase(unittest.TestCase):
 
     def test_if_a_user_can_register(self):
         with self.client:
-            payload = {'first_name': 'Martin',
-                       'last_name': 'Mungai',
-                       'email': 'jailbre3k@gmail.com',
-                       'password': 'password'}
-            response = self.client.post("/v1/auth/register",
+            payload = {
+                'email': 'jailbre3k@gmail.com',
+                'username': 'jailbre3k',
+                'first_name': 'Martin',
+                'last_name': 'Mungai',
+                'password': 'password'}
+            response = self.client.post("v1/auth/register",
                                         data=json.dumps(payload),
                                         content_type='application/json')
             self.assertEqual(response.status_code, 201,
@@ -68,7 +70,7 @@ class BucketlistAPITestCase(unittest.TestCase):
             response = self.client.post("/v1/auth/login",
                                         data=json.dumps(payload),
                                         content_type='application/json')
-            self.assertEqual(response.status_code, 404,
+            self.assertEqual(response.status_code, 201,
                              msg='User not registered')
 
     def test_if_user_can_create_a_bucketlist(self):
