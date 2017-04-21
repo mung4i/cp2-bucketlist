@@ -24,7 +24,7 @@ class TestingConfig(Config):
 class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_ECHO = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:////' + basedir + '/app' + \
+    SQLALCHEMY_DATABASE_URI = 'sqlite:////' + basedir + '/bucketlist' + \
         '/bucketlist.sqlite'
 
 
