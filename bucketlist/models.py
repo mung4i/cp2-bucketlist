@@ -56,29 +56,24 @@ class User(UserMixin, db.Model):
         except jwt.InvalidTokenError:
             return 'Invalid token. Log in to continue.'
 
+    @property
+    def password(self):
+        raise AttributeError('Access denied')
 
-@property
-def password(self):
-    raise AttributeError('Access denied')
+    @password.setter
+    def password(self, password):
+        self.password_hash = generate_password_hash(password)
 
+    def verify_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
-@password.setter
-def password(self):
-    self.password_hash = generate_password_hash
+    def __repr__(self):
+        return "{0}: {1} {2}".format(self.username, self.first_name,
+                                     self.last_name)
 
-
-def verify_password(self):
-    return check_password_hash(self.password_hash, password)
-
-
-def __repr__(self):
-    return "{0}: {1} {2}".format(self.username, self.first_name,
-                                 self.last_name)
-
-
-@login_manager.user_loader
-def load_user(users_id):
-    return User.query.get(int(users_id))
+    @login_manager.user_loader
+    def load_user(users_id):
+        return User.query.get(int(users_id))
 
 
 class Bucketlist(db.Model):
