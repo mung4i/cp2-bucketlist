@@ -83,7 +83,7 @@ def load_user(users_id):
 
 class Bucketlist(db.Model):
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     title = db.Column(db.String(25))
     date_created = db.Column(db.DateTime)
     date_modified = db.Column(db.DateTime)
@@ -96,7 +96,7 @@ class Bucketlist(db.Model):
 
 class Items(db.Model):
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(255))
     date_created = db.Column(db.DateTime)
     date_modified = db.Column(db.DateTime)
