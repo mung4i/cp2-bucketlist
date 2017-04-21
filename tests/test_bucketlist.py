@@ -13,6 +13,7 @@ class BaseTestCase(unittest.TestCase):
         db.drop_all()
         db.create_all()
         self.client = create_app('testing').test_client()
+
         self.test_user = User(email='test@bucket.com',
                               username='thetester',
                               first_name='test',
@@ -23,6 +24,19 @@ class BaseTestCase(unittest.TestCase):
         rv = db.session.query(User).filter_by(
             email='test@bucket.com').first()
         self.test_token = self.test_user.encode_auth_token(rv.id)
+
+        self.test_user_a = User(
+            email='test_a@bucket.com',
+            username='theatester',
+            first_name='test_a',
+            last_name='user',
+            password='password'
+        )
+        db.session.add(self.test_user_a)
+        db.session.commit()
+        user_id = db.session.query(User).filter_by(
+            email='test_a@bucket.com').first()
+        self.test_token_a = self.test_user_a.encode_auth_token(user_id.id)
 
 
 class RegistrationLoginTestCase(BaseTestCase):
@@ -107,6 +121,22 @@ class BucketListAPITestCase(BaseTestCase):
                                         })
             self.assertEqual(response.status_code, 201)
 
+    def test_if_user_can_update_another_users_bucketlist(self):
+        with self.client:
+            now = datetime.datetime.now()
+            update_payload = {'title': '2018',
+                              'date_created': now.isoformat(),
+                              'date_modified': now.isoformat(),
+                              'users_email': 'test_a@bucket.com'
+                              }
+            response = self.client.put("v1/bucketlists/1",
+                                       data=json.dumps(update_payload),
+                                       headers={
+                                           'Content-Type': 'application/json',
+                                           'Authorization': self.test_token})
+
+            self.assertEqual(response.status_code, 405)
+
     def test_if_user_can_get_a_list_of_bucketlist(self):
         with self.client:
             response = self.client.get("v1/bucketlists",
@@ -190,10 +220,11 @@ class BucketListAPITestCase(BaseTestCase):
             payload = {'name': 'Visit Addis Ababa',
                        'date_created': now.isoformat(),
                        'date_modified': now.isoformat(),
-                       'done': False}
+                       'done': False,
+                       'bucketlist_id': 1}
 
             rv = self.client.post("v1/bucketlists/1/items",
-                                  data=json.dumps(item_payload),
+                                  data=json.dumps(payload),
                                   headers={
                                       'Content-Type': 'application/json',
                                       'Authorization': self.test_token
@@ -227,6 +258,43 @@ class BucketListAPITestCase(BaseTestCase):
 
 class BucketListAPIEdgeTestCase(BaseTestCase):
 
+    def test_if_can_view_bucketlists_when_none_exist(self):
+        with self.client:
+            response = self.client.get("v1/bucketlists/",
+                                       headers={
+                                           'Content-Type': 'application/json',
+                                           'Authorization': self.test_token
+                                       })
+
+            self.assertEqual(response.status_code, 204)
+
+    def test_if_a_user_can_view_non_existent_bucketlist(self):
+        with self.client:
+            response = self.client.get("v1/bucketlists/10",
+                                       headers={
+                                           'Content-Type': 'application/json',
+                                           'Authorization': self.test_token
+                                       })
+
+            self.assertEqual(response.status_code, 204)
+
+    def test_if_user_can_update_non_existing_bucketlist(self):
+        with self.client:
+            now = datetime.datetime.now()
+            update_payload = {'name': 'Visit Kampala',
+                              'date_modified': now.isoformat(),
+                              'done': False,
+                              'bucketlist_id': 2
+                              }
+
+            rv = self.client.put("v1/bucketlists/2/items/1",
+                                 data=json.dumps(update_payload),
+                                 headers={
+                                     'Content-Type': 'application/json',
+                                     'Authorization': self.test_token
+                                 })
+            self.assertEqual(rv.status_code, 204)
+
     def test_if_a_user_can_create_existing_bucketlist(self):
         with self.client:
             now = datetime.datetime.now()
@@ -253,7 +321,10 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
         with self.client:
             now = datetime.datetime.now()
             payload = {'date_created': now.isoformat(),
-                       'date_modified': now.isoformat()}
+                       'date_modified': now.isoformat(),
+                       'users_email': 'test@bucket.com'
+                       }
+
             response = self.client.post("v1/bucketlists/",
                                         data=json.dumps(payload),
                                         headers={
@@ -268,7 +339,9 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
             payload = {'title': '2017',
                        'date_created': now.isoformat(),
                        'date_modified': now.isoformat(),
-                       'users_email': 'test@bucket.com'}
+                       'users_email': 'test@bucket.com'
+                       }
+
             response = self.client.post("v1/bucketlists/",
                                         data=json.dumps(payload),
                                         headers={
@@ -300,6 +373,24 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
             self.assertEqual(response.status_code, 201)
             self.assertEqual(rv.status_code, 403)
 
+    def test_if_a_user_can_update_bucketlist_items_without_auth(self):
+        with self.client:
+            now = datetime.datetime.now()
+            update_payload = {'name': 'Visit Boston',
+                              'date_created': now.isoformat(),
+                              'date_modified': now.isoformat(),
+                              'done': False,
+                              'bucketlist_id': 1
+                              }
+
+            rv = self.client.put("v1/bucketlists/1/items/1",
+                                 data=json.dumps(update_payload),
+                                 headers={
+                                     'Content-Type': 'application/json',
+                                     'Authorization': self.test_token
+                                 })
+            self.assertEqual(rv.status_code, 204)
+
     def test_if_a_user_can_create_bucketlist_items_without_name(self):
         with self.client:
             now = datetime.datetime.now()
@@ -330,4 +421,12 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
                                             'Content-Type': 'application/json',
                                             'Authorization': self.test_token
                                         })
+            self.assertEqual(response.status_code, 401)
+
+    def test_if_user_can_get_bucketlists_without_auth(self):
+        with self.client:
+            response = self.client.get("v1/bucketlists",
+                                       headers={
+                                           'Content-Type': 'application/json'
+                                       })
             self.assertEqual(response.status_code, 401)
