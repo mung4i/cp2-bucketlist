@@ -3,7 +3,6 @@ from flask.views import MethodView
 
 from bucketlist import db
 from bucketlist.models import User
-# from .auth import auth as auth
 
 
 class RegisterAPI(MethodView):
@@ -33,9 +32,10 @@ class RegisterAPI(MethodView):
                 }
                 return make_response(jsonify(response)), 201
             except Exception as e:
+                print(e)
                 response = {
                     'status': 'fail',
-                    'message': 'Some error occurred. Please try again.'
+                    'message': 'Some error occurred. Please try again.',
                 }
                 return make_response(jsonify(response)), 401
         else:
@@ -44,3 +44,32 @@ class RegisterAPI(MethodView):
                 'message': 'User already exists'
             }
             return make_response(jsonify(response)), 202
+
+
+class LoginAPI(MethodView):
+
+    def post(self):
+        data = request.get_json()
+        try:
+            user = User.query.filter_by(email=data.get('email')).first()
+            if not user:
+                response = {
+                    'status': 'Failed',
+                    'message': "User is not registered "
+                }
+                return make_response(jsonify(response), 401)
+            auth_token = user.encode_auth_token(user.id)
+            if auth_token:
+                response = {
+                    'status': "Success",
+                    'message': "Successfully logged in",
+                    "auth_token": auth_token.decode()
+                }
+                return make_response(jsonify(response)), 200
+        except Exception as e:
+            print(e)
+            response = {
+                'status': 'Failed',
+                'message': 'User password combination failed to match.'
+            }
+            return make_response(jsonify(response)), 500
