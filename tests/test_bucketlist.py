@@ -1,5 +1,6 @@
 import datetime
 import json
+import sys
 import unittest
 
 from bucketlist import create_app, db
@@ -21,9 +22,9 @@ class BaseTestCase(unittest.TestCase):
                               password='password')
         db.session.add(self.test_user)
         db.session.commit()
-        rv = db.session.query(User).filter_by(
+        query_user = db.session.query(User).filter_by(
             email='test@bucket.com').first()
-        self.test_token = self.test_user.encode_auth_token(rv.id)
+        self.test_token = self.test_user.encode_auth_token(query_user.id)
 
         self.test_user_a = User(
             email='test_a@bucket.com',
@@ -38,8 +39,20 @@ class BaseTestCase(unittest.TestCase):
             email='test_a@bucket.com').first()
         self.test_token_a = self.test_user_a.encode_auth_token(user_id.id)
 
+        def tear_down(self):
+            db.session.remove()
+            db.drop_all()
+
 
 class RegistrationLoginTestCase(BaseTestCase):
+
+    payload = {
+        'first_name': 'Martin',
+        'last_name': 'Mungai',
+        'username': 'jailbre3k',
+        'email': 'jailbre3k@gmail.com',
+        'password': 'password'
+    }
 
     def test_encode_auth_token(self):
         with self.client:
@@ -47,45 +60,89 @@ class RegistrationLoginTestCase(BaseTestCase):
                 email='test@bucket.com').first()
             auth_token = test_user.encode_auth_token(test_user.id)
             self.assertTrue(isinstance(auth_token, bytes))
+            self.assertEqual(sys.getsizeof(auth_token), 172)
 
-    def test_if_a_user_can_register(self):
+    def test_decode_auth_token(self):
         with self.client:
-            payload = {'first_name': 'Martin',
-                       'last_name': 'Mungai',
-                       'username': 'jailbre3k',
-                       'email': 'jailbre3k@gmail.com',
-                       'password': 'password'}
+            user = User(
+                email='jailbre3k@gmail.com',
+                username='jailbre3k',
+                first_name='Martin',
+                last_name='Mungai',
+                password='password'
+            )
+            db.session.add(user)
+            db.session.commit()
+            auth_token = user.encode_auth_token(user.id)
+            self.assertTrue(isinstance(auth_token, bytes))
+            self.assertTrue(User.decode_auth_token(
+                auth_token.decode("UTF-8") == 1))
+
+    def test_user_can_register(self):
+        with self.client:
+
             response = self.client.post("/v1/auth/register",
-                                        data=json.dumps(payload),
+                                        data=json.dumps(self.payload),
                                         content_type='application/json')
+
+            data = json.loads(response.data.decode())
+            self.assertTrue(data["status"] == "Success")
+            self.assertTrue(data["message"] == "Successfully registered")
+            self.assertTrue(data["auth_token"])
             self.assertEqual(response.status_code, 201,
-                             msg='Server not found')
+                             msg=data["message"])
 
     def test_existing_users_cannot_be_registered(self):
         with self.client:
-            payload = {'first_name': 'Martin',
-                       'last_name': 'Mungai',
-                       'username': 'jailbre3k',
-                       'email': 'jailbre3k@gmail.com',
-                       'password': 'password'}
-            response = self.client.post("/v1/auth/register",
-                                        data=json.dumps(payload),
-                                        content_type='application/json')
-            # data = json.loads(response.data.decode())
-            self.assertEqual(response.status_code, 202)
-            # self.assertTrue(data['message'] == 'User already exists')
 
-    def test_if_a_user_can_login(self):
+            response = self.client.post("/v1/auth/register",
+                                        data=json.dumps(self.payload),
+                                        content_type='application/json')
+
+            new_response = self.client.post("/v1/auth/register",
+                                            data=json.dumps(self.payload),
+                                            content_type='application/json')
+
+            data = json.loads(response.data.decode())
+            duplicate_data = json.loads(new_response.data.decode())
+
+            self.assertEqual(response.status_code, 201, msg=data["message"])
+            self.assertTrue(data['message'] == 'Successfully registered')
+            self.assertEqual(new_response.status_code, 202,
+                             msg=duplicate_data["message"])
+            self.assertTrue(duplicate_data['message'] == 'User already exists')
+
+    def test_user_can_login(self):
         with self.client:
+            reg_payload = {
+                'first_name': 'Mercy',
+                'last_name': 'Muchai',
+                'username': 'mmuchai',
+                'email': 'mmuchai@gmail.com',
+                'password': 'password'
+            }
+            register = self.client.post('/v1/auth/register',
+                                        data=json.dumps(reg_payload),
+                                        content_type='application/json')
+            register_response = json.loads(register.data.decode())
+            self.assertTrue(register_response['message'] ==
+                            "Successfully registered")
+            self.assertEqual(register.status_code, 201)
+
+            # Login Mercy
             payload = {
-                'email': 'jailbre3k@gmail.com',
+                'email': 'mmuchai@gmail.com',
                 'password': 'password'
             }
             response = self.client.post("/v1/auth/login",
                                         data=json.dumps(payload),
                                         content_type='application/json')
+
+            data = json.loads(response.data.decode())
+            self.assertTrue(data['auth_token'])
+            self.assertTrue(data['message'] == 'Successfully logged in')
             self.assertEqual(response.status_code, 200,
-                             msg='Server not found')
+                             msg=data["message"])
 
     def test_non_registered_user_can_login(self):
         with self.client:
@@ -96,17 +153,17 @@ class RegistrationLoginTestCase(BaseTestCase):
             response = self.client.post("/v1/auth/login",
                                         data=json.dumps(payload),
                                         content_type='application/json')
+            data = json.loads(response.data.decode())
+            self.assertTrue(data["status"] == 'Failed')
+            self.assertTrue(data["message"] == 'User is not registered')
+            self.assertTrue(response.content_type == 'application/json')
             self.assertEqual(response.status_code, 401,
                              msg='User not registered')
-
-    def tear_down(self):
-        db.session.remove()
-        db.drop_all()
 
 
 class BucketListAPITestCase(BaseTestCase):
 
-    def test_if_user_can_create_a_bucketlist(self):
+    def test_user_can_create_a_bucketlist(self):
         with self.client:
             now = datetime.datetime.now()
             payload = {'title': '2017',
@@ -121,7 +178,7 @@ class BucketListAPITestCase(BaseTestCase):
                                         })
             self.assertEqual(response.status_code, 201)
 
-    def test_if_user_can_update_another_users_bucketlist(self):
+    def test_user_can_update_another_users_bucketlist(self):
         with self.client:
             now = datetime.datetime.now()
             update_payload = {'title': '2018',
@@ -135,9 +192,9 @@ class BucketListAPITestCase(BaseTestCase):
                                            'Content-Type': 'application/json',
                                            'Authorization': self.test_token})
 
-            self.assertEqual(response.status_code, 405)
+            self.assertEqual(response.status_code, 403)
 
-    def test_if_user_can_get_a_list_of_bucketlist(self):
+    def test_user_can_get_a_list_of_bucketlist(self):
         with self.client:
             response = self.client.get("v1/bucketlists",
                                        headers={
@@ -146,7 +203,7 @@ class BucketListAPITestCase(BaseTestCase):
                                        })
             self.assertEqual(response.status_code, 200)
 
-    def test_if_user_can_get_a_single_bucketlist(self):
+    def test_user_can_get_a_single_bucketlist(self):
         with self.client:
             payload = {'title': '2017'}
             response = self.client.get("v1/bucketlists/1",
@@ -157,7 +214,7 @@ class BucketListAPITestCase(BaseTestCase):
                                        })
             self.assertEqual(response.status_code, 200)
 
-    def test_if_user_can_create_a_bucketlist_item(self):
+    def test_user_can_create_a_bucketlist_item(self):
         with self.client:
             now = datetime.datetime.now()
             payload = {'name': 'Visit New York',
@@ -173,7 +230,7 @@ class BucketListAPITestCase(BaseTestCase):
                                         })
             self.assertEqual(response.status_code, 201)
 
-    def test_if_user_can_update_a_bucketlist_item(self):
+    def test_user_can_update_a_bucketlist_item(self):
         with self.client:
             now = datetime.datetime.now()
             # Create a bucket list
@@ -214,7 +271,7 @@ class BucketListAPITestCase(BaseTestCase):
                                  })
             self.assertEqual(rv.status_code, 200)
 
-    def test_if_user_can_delete_a_bucketlist_item(self):
+    def test_user_can_delete_a_bucketlist_item(self):
         with self.client:
             now = datetime.datetime.now()
             payload = {'name': 'Visit Addis Ababa',
@@ -241,7 +298,7 @@ class BucketListAPITestCase(BaseTestCase):
             self.assertEqual(rv.status_code, 201)
             self.assertEqual(response.status_code, 204)
 
-    def test_if_a_user_can_delete_a_bucketlist(self):
+    def test_user_can_delete_a_bucketlist(self):
         with self.client:
             response = self.client.delete("/v1/bucketlists/1",
                                           headers={
@@ -258,7 +315,7 @@ class BucketListAPITestCase(BaseTestCase):
 
 class BucketListAPIEdgeTestCase(BaseTestCase):
 
-    def test_if_can_view_bucketlists_when_none_exist(self):
+    def test_can_view_bucketlists_when_none_exist(self):
         with self.client:
             response = self.client.get("v1/bucketlists/",
                                        headers={
@@ -268,7 +325,7 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
 
             self.assertEqual(response.status_code, 204)
 
-    def test_if_a_user_can_view_non_existent_bucketlist(self):
+    def test_user_can_view_non_existent_bucketlist(self):
         with self.client:
             response = self.client.get("v1/bucketlists/10",
                                        headers={
@@ -278,7 +335,7 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
 
             self.assertEqual(response.status_code, 204)
 
-    def test_if_user_can_update_non_existing_bucketlist(self):
+    def test_user_can_update_non_existing_bucketlist(self):
         with self.client:
             now = datetime.datetime.now()
             update_payload = {'name': 'Visit Kampala',
@@ -295,7 +352,7 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
                                  })
             self.assertEqual(rv.status_code, 204)
 
-    def test_if_a_user_can_create_existing_bucketlist(self):
+    def test_user_can_create_existing_bucketlist(self):
         with self.client:
             now = datetime.datetime.now()
             payload = {'title': '2017',
@@ -317,7 +374,7 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
             self.assertEqual(response.status_code, 201)
             self.assertEqual(rv.status_code, 204)
 
-    def test_if_a_bucketlist_with_no_name_can_be_created(self):
+    def test_bucketlist_with_no_name_can_be_created(self):
         with self.client:
             now = datetime.datetime.now()
             payload = {'date_created': now.isoformat(),
@@ -333,7 +390,7 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
                                         })
             self.assertEqual(response.status_code, 409)
 
-    def test_if_a_bucketlist_without_authentication_can_be_created(self):
+    def test_bucketlist_without_authentication_can_be_created(self):
         with self.client:
             now = datetime.datetime.now()
             payload = {'title': '2017',
@@ -349,7 +406,7 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
                                         })
             self.assertEqual(response.status_code, 401)
 
-    def test_if_a_user_can_create_existing_bucketlist_items(self):
+    def test_user_can_create_existing_bucketlist_items(self):
         with self.client:
             now = datetime.datetime.now()
             payload = {'name': 'Visit New York',
@@ -373,7 +430,7 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
             self.assertEqual(response.status_code, 201)
             self.assertEqual(rv.status_code, 403)
 
-    def test_if_a_user_can_update_bucketlist_items_without_auth(self):
+    def test_user_can_update_bucketlist_items_without_auth(self):
         with self.client:
             now = datetime.datetime.now()
             update_payload = {'name': 'Visit Boston',
@@ -391,7 +448,7 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
                                  })
             self.assertEqual(rv.status_code, 204)
 
-    def test_if_a_user_can_create_bucketlist_items_without_name(self):
+    def test_user_can_create_bucketlist_items_without_name(self):
         with self.client:
             now = datetime.datetime.now()
             payload = {'date_created': now.isoformat(),
@@ -404,9 +461,9 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
                                             'Authorization': self.test_token
                                         })
 
-            self.assertEqual(response.status_code, 403)
+            self.assertEqual(response.status_code, 400)
 
-    def test_if_a_user_can_create_bucketlist_items_without_auth(self):
+    def test_user_can_create_bucketlist_items_without_auth(self):
         with self.client:
             now = datetime.datetime.now()
             payload = {
@@ -423,7 +480,7 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
                                         })
             self.assertEqual(response.status_code, 401)
 
-    def test_if_user_can_get_bucketlists_without_auth(self):
+    def test_user_can_get_bucketlists_without_auth(self):
         with self.client:
             response = self.client.get("v1/bucketlists",
                                        headers={
