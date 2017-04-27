@@ -16,6 +16,7 @@ class User(UserMixin, db.Model):
     last_name = db.Column(db.String(25), index=True)
     password_hash = db.Column(db.String(100))
     is_admin = db.Column(db.Boolean, default=False)
+    bucketlists = db.relationship('Bucketlist', backref='user', lazy='dynamic')
 
     def __init__(self, email, username, first_name, last_name, password=[]):
         self.email = email
@@ -49,7 +50,7 @@ class User(UserMixin, db.Model):
         Decodes auth token
         """
         try:
-            payload = jwt.decode(auth_token, 'the-secret-secret-k3y'),
+            payload = jwt.decode(auth_token, 'the-secret-secret-k3y')
             return payload['sub']
         except jwt.ExpiredSignatureError:
             return 'Token has expired. Please log in to continue.'
@@ -83,7 +84,8 @@ class Bucketlist(db.Model):
     date_created = db.Column(db.DateTime)
     date_modified = db.Column(db.DateTime)
     users_email = db.Column(db.String(255), db.ForeignKey('user.email'))
-    user = db.relationship("User", backref=db.backref('users', lazy="dynamic"))
+    items = db.relationship('Items', backref='bucketlist',
+                            lazy='dynamic')
 
     def __repr__(self):
         return 'Bucketlist: {}'.format(self.title)
@@ -97,9 +99,6 @@ class Items(db.Model):
     date_modified = db.Column(db.DateTime)
     done = db.Column(db.Boolean, default=False)
     bucketlist_id = db.Column(db.Integer, db.ForeignKey('bucketlist.id'))
-    bucketlist = db.relationship('Bucketlist',
-                                 backref=db.backref("bucketlists",
-                                                    lazy='dynamic'))
 
     def __repr__(self):
         return 'Item: {}'.format(self.name)
