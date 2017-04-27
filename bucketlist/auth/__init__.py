@@ -13,3 +13,9 @@ auth.add_url_rule(
     view_func=views.RegisterAPI.as_view('register_api'),
     methods=['POST']
 )
+
+auth.add_url_rule(
+    '/v1/auth/login',
+    view_func=views.LoginAPI.as_view('login_api'),
+    methods=['POST']
+)
