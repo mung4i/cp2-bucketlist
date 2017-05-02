@@ -7,8 +7,8 @@ class Config(object):
     """
     My configs
     """
-    DEBUG = False
-    TESTING = False
+    # DEBUG = False
+    # TESTING = False
     CSRF_ENABLED = True
 
 
@@ -23,7 +23,8 @@ class TestingConfig(Config):
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    SQLALCHEMY_ECHO = True
+    SQLALCHEMY_ECHO = False
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = 'sqlite:////' + basedir + '/bucketlist' + \
         '/bucketlist.sqlite'
 
