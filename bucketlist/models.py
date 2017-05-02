@@ -25,16 +25,14 @@ class User(UserMixin, db.Model):
         self.last_name = last_name
         self.password = password
 
-    def encode_auth_token(self, user_id):
+    def encode_auth_token(self, email):
         """
         Generates auth token
         """
         try:
             payload = {
-                'exp': datetime.now() + timedelta(days=0,
-                                                  seconds=5),
-                'iat': datetime.now(),
-                'sub': user_id
+                'exp': datetime.now() + timedelta(days=1),
+                'email': email
             }
             return jwt.encode(
                 payload,
@@ -50,8 +48,9 @@ class User(UserMixin, db.Model):
         Decodes auth token
         """
         try:
-            payload = jwt.decode(auth_token, 'the-secret-secret-k3y')
-            return payload['sub']
+            payload = jwt.decode(auth_token, 'the-secret-secret-k3y',
+                                 algorithms=['HS256'])
+            return payload['email']
         except jwt.ExpiredSignatureError:
             return 'Token has expired. Please log in to continue.'
         except jwt.InvalidTokenError:
@@ -73,8 +72,8 @@ class User(UserMixin, db.Model):
                                      self.last_name)
 
     @login_manager.user_loader
-    def load_user(users_id):
-        return User.query.get(int(users_id))
+    def load_user(email):
+        return User.query.get(email=email)
 
 
 class Bucketlist(db.Model):
