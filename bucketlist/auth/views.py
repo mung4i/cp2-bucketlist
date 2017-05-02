@@ -1,4 +1,7 @@
+import datetime
+
 from flask import request, make_response, jsonify
+# from flask_login import login_required
 from flask.views import MethodView
 
 from bucketlist import db
@@ -6,6 +9,10 @@ from bucketlist.models import User
 
 
 class RegisterAPI(MethodView):
+
+    """
+        Register users
+    """
 
     def post(self):
         data = request.get_json()
@@ -47,6 +54,10 @@ class RegisterAPI(MethodView):
 
 
 class LoginAPI(MethodView):
+    """
+        Login users
+    """
+    now = datetime.datetime.now()
 
     def post(self):
         data = request.get_json()
@@ -58,7 +69,7 @@ class LoginAPI(MethodView):
                     'message': "User is not registered "
                 }
                 return make_response(jsonify(response), 401)
-            auth_token = user.encode_auth_token(user.id)
+            auth_token = user.encode_auth_token(user.email)
             if auth_token:
                 response = {
                     'status': "Success",
