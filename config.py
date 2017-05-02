@@ -7,8 +7,6 @@ class Config(object):
     """
     My configs
     """
-    # DEBUG = False
-    # TESTING = False
     CSRF_ENABLED = True
 
 
