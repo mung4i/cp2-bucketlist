@@ -580,13 +580,13 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
             update_payload = {'name': 'Visit Kampala',
                               'done': False}
 
-            rv = self.client.put("v1/bucketlists/2/items/1",
-                                 data=json.dumps(update_payload),
-                                 headers={
-                                     'Content-Type': 'application/json',
-                                     'Authorization': self.test_token
-                                 })
-            self.assertEqual(rv.status_code, 204)
+            response = self.client.put("v1/bucketlists/2/items/1",
+                                       data=json.dumps(update_payload),
+                                       headers={
+                                           'Content-Type': 'application/json',
+                                           'Authorization': self.test_token
+                                       })
+            self.assertEqual(response.status_code, 400)
 
     def test_update_bucketlist_items_without_auth(self):
         """
@@ -611,6 +611,6 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
                                        data=json.dumps(update_payload),
                                        headers={
                                            'Content-Type': 'application/json',
-                                           'Authorization': self.test_token
+                                           'Authorization': ''
                                        })
-            self.assertEqual(response.status_code, 204)
+            self.assertEqual(response.status_code, 401)
