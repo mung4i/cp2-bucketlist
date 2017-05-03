@@ -25,5 +25,14 @@ home.add_url_rule(
     '/v1/bucketlists/<int:id>/items/',
     view_func=bucketlist_items_view,
     methods=['POST']
-
+)
+home.add_url_rule(
+    '/v1/bucketlists/<int:id>/items/<int:item_id>',
+    view_func=bucketlist_items_view,
+    methods=['GET']
+)
+home.add_url_rule(
+    '/v1/bucketlists/<int:id>/items',
+    view_func=bucketlist_items_view,
+    methods=['GET']
 )
