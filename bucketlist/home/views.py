@@ -228,8 +228,6 @@ class BucketListItemsAPI(MethodView):
             return make_response(jsonify(response)), 401
 
     def get(self, id, item_id=None):
-        # data = request.get_json()
-        # print("\n\n\n\n\n{}".format(data))
         headers = request.headers.get('Authorization')
         if headers:
             try:
@@ -291,3 +289,37 @@ class BucketListItemsAPI(MethodView):
                 'message': 'You are not authorized to view these resources'
             }
             return make_response(jsonify(response)), 401
+
+    def put(self, id=None, item_id=None):
+        data = request.get_json()
+        headers = request.headers.get('Authorization')
+        if headers:
+            try:
+                email = User.decode_auth_token(headers)
+                user = User.query.filter_by(email=email).first()
+                item = Items.query.filter_by(
+                    id=item_id).first()
+                if item.bucketlist_id == id:
+                    item.name = data.get('name')
+                    item.date_modified = self.now
+                    db.session.commit()
+                    response = {
+                        'status': "Success",
+                        'message': "Bucketlist has been updated"
+                    }
+                    return make_response(jsonify(response)), 200
+
+                else:
+                    response = {
+                        'status': 'Fail',
+                        'message':
+                        'You are not authorized to update these resources'
+                    }
+                    return make_response(jsonify(response)), 401
+
+            except:
+                response = {
+                    'status': 'Fail',
+                    'message': 'Some error occured.'
+                }
+                return make_response(jsonify(response)), 400
