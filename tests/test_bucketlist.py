@@ -317,7 +317,7 @@ class BucketListItemsTestCase(BaseTestCase):
         Test if a user can create a bucketlist item
         """
         with self.client:
-            create_response = self.create_bucketlist(self.payload)
+            create_response = self.create_bucketlist(self.create_payload)
             data = json.loads(create_response.data.decode())
             self.assertTrue(data["message"] == "Bucketlist has been created")
             self.assertTrue(data["status"] == "Success")
@@ -329,6 +329,29 @@ class BucketListItemsTestCase(BaseTestCase):
             self.assertTrue(
                 data["message"] == "Bucketlist item has been created")
             self.assertEqual(response.status_code, 201)
+
+    def test_get_bucketlist_items(self):
+        """
+        Test if a user can get bucketlist items
+        """
+        with self.client:
+            create_response = self.create_bucketlist(self.payload)
+            data = json.loads(create_response.data.decode())
+            self.assertTrue(data["message"] == "Bucketlist has been created")
+            self.assertEqual(create_response.status_code, 201)
+
+            response = self.create_bucketlist_item(self.payload)
+            data = json.loads(response.data.decode())
+            self.assertTrue(data["status"] == "Success")
+            self.assertEqual(response.status_code, 201)
+
+            get_response = self.client.get("v1/bucketlists/1/items/1",
+                                           headers={
+                                               'Content-Type':
+                                               'application/json',
+                                               'Authorization': self.test_token
+                                           })
+            self.assertEqual(get_response.status_code, 200)
 
     def test_delete_bucketlist_item(self):
         """
