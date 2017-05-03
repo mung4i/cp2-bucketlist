@@ -29,7 +29,7 @@ home.add_url_rule(
 home.add_url_rule(
     '/v1/bucketlists/<int:id>/items/<int:item_id>',
     view_func=bucketlist_items_view,
-    methods=['GET']
+    methods=['GET', 'PUT']
 )
 home.add_url_rule(
     '/v1/bucketlists/<int:id>/items',
