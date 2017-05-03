@@ -8,6 +8,8 @@ from . import views
 
 
 bucketlist_view = views.BucketlistAPI.as_view('bucketlist_api')
+bucketlist_items_view = views.BucketListItemsAPI.as_view(
+    'bucketlist_items_api')
 
 home.add_url_rule(
     '/v1/bucketlists/',
@@ -18,4 +20,10 @@ home.add_url_rule(
     '/v1/bucketlists/<int:id>',
     view_func=bucketlist_view,
     methods=['PUT', 'DELETE', 'GET']
+)
+home.add_url_rule(
+    '/v1/bucketlists/<int:id>/items/',
+    view_func=bucketlist_items_view,
+    methods=['POST']
+
 )
