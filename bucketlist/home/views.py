@@ -183,7 +183,7 @@ class BucketlistAPI(MethodView):
 
 class BucketListItemsAPI(MethodView):
     """
-    Create, Update, Delete BucketListItems
+    Create, Get, Update, Delete BucketListItems
     """
     now = datetime.datetime.now()
 
@@ -219,6 +219,71 @@ class BucketListItemsAPI(MethodView):
                     'message': 'Bucketlist already exists.'
                 }
                 return make_response(jsonify(response)), 403
+
+        else:
+            response = {
+                'status': 'Fail',
+                'message': 'You are not authorized to view these resources'
+            }
+            return make_response(jsonify(response)), 401
+
+    def get(self, id, item_id=None):
+        # data = request.get_json()
+        # print("\n\n\n\n\n{}".format(data))
+        headers = request.headers.get('Authorization')
+        if headers:
+            try:
+                email = User.decode_auth_token(headers)
+                user = User.query.filter_by(email=email).first()
+                if item_id:
+                    item = Items.query.filter_by(
+                        id=item_id).first()
+                    if not item:
+                        response = {
+                            'status': 'Fail',
+                            'message': 'The bucketlist item does not exist'
+                        }
+                        return make_response(jsonify(response)), 404
+                    if item and user:
+                        response = {
+                            'name': item.name,
+                            'date_created': item.date_created,
+                            'date_modified': item.date_modified,
+                            'done': item.done,
+                            'bucketlist_id': item.bucketlist_id
+                        }
+                        print(response)
+                        return make_response(jsonify(response)), 200
+                if id:
+                    all_items = []
+                    items = Items.query.filter_by(
+                        bucketlist_id=id).all()
+                    print(items)
+                    if not items:
+                        response = {
+                            "status": "Fail",
+                            "message": "You do not have any bucketlist items"
+                        }
+
+                        return make_response(jsonify(response)), 404
+                    for item in items:
+                        response = {
+                            "name": item.name,
+                            "date_created": item.date_created,
+                            "date_modified": item.date_modified,
+                            "done": item.done,
+                            "bucketlist_id": item.bucketlist_id,
+                            "item_id": item.id
+                        }
+                        all_items.append(response)
+                    return make_response(jsonify(all_items)), 200
+            except Exception as e:
+                print(e)
+                response = {
+                    'status': 'Fail',
+                    'message': 'Some error occurred.'
+                }
+                return make_response(jsonify(response)), 400
 
         else:
             response = {
