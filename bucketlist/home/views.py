@@ -4,7 +4,7 @@ from flask import request, make_response, jsonify
 from flask.views import MethodView
 
 from bucketlist import db
-from bucketlist.models import User, Bucketlist
+from bucketlist.models import User, Bucketlist, Items
 
 
 class BucketlistAPI(MethodView):
@@ -55,8 +55,6 @@ class BucketlistAPI(MethodView):
             return make_response(jsonify(response)), 403
 
     def get(self, id=None):
-        print('first')
-        print(id)
 
         headers = request.headers.get('Authorization')
         if headers:
@@ -66,6 +64,12 @@ class BucketlistAPI(MethodView):
 
                 if id:
                     bucketlist = Bucketlist.query.filter_by(id=id).first()
+                    if not bucketlist:
+                        response = {
+                            'status': 'Fail',
+                            'message': 'The bucketlist does not exist'
+                        }
+                        return make_response(jsonify(response)), 404
                     if user.email == bucketlist.users_email:
                         response = {
                             'id': bucketlist.id,
@@ -78,6 +82,12 @@ class BucketlistAPI(MethodView):
                     all_bucketlists = []
                     bucketlists = Bucketlist.query.filter_by(
                         users_email=user.email).all()
+                    if not bucketlists:
+                        response = {
+                            'status': 'Fail',
+                            'message': 'You do not have bucketlists'
+                        }
+                        return make_response(jsonify(response)), 404
                     for bucketlist in bucketlists:
                         if user.email == bucketlist.users_email:
                             response = {
@@ -88,6 +98,7 @@ class BucketlistAPI(MethodView):
                             }
                             all_bucketlists.append(response)
                     return make_response(jsonify(all_bucketlists)), 200
+
             except Exception as e:
                 print(e)
                 response = {
@@ -170,5 +181,48 @@ class BucketlistAPI(MethodView):
                 return make_response(jsonify(response)), 400
 
 
-class BucketListItems(MethodView):
-    pass
+class BucketListItemsAPI(MethodView):
+    """
+    Create, Update, Delete BucketListItems
+    """
+    now = datetime.datetime.now()
+
+    def post(self, id):
+        data = request.get_json()
+        headers = request.headers.get('Authorization')
+        items = Items.query.filter_by(
+            name=data.get('name')).first()
+        if headers:
+            if not items:
+                email = User.decode_auth_token(headers)
+                user = User.query.filter_by(email=email).first()
+                if User.decode_auth_token(user.email):
+                    create = Items(
+                        name=data.get('name'),
+                        date_created=self.now,
+                        date_modified=self.now,
+                        done=False,
+                        bucketlist_id=id)
+                    db.session.add(create)
+                    db.session.commit()
+
+                response = {
+                    'status': 'Success',
+                    'message': 'Bucketlist item has been created'
+                }
+
+                return make_response(jsonify(response)), 201
+
+            else:
+                response = {
+                    'status': 'Fail',
+                    'message': 'Bucketlist already exists.'
+                }
+                return make_response(jsonify(response)), 403
+
+        else:
+            response = {
+                'status': 'Fail',
+                'message': 'You are not authorized to view these resources'
+            }
+            return make_response(jsonify(response)), 401
