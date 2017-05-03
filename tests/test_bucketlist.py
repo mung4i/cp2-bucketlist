@@ -402,7 +402,7 @@ class BucketListItemsTestCase(BaseTestCase):
             # Edit the bucket list
             update_payload = {'name': 'Visit Kampala',
                               'bucketlist_id': 2}
-            update_response = self.client.put("v1/bucketlists/2/items/1",
+            update_response = self.client.put("v1/bucketlists/1/items/1",
                                               data=json.dumps(update_payload),
                                               headers={
                                                   'Content-Type':
