@@ -308,18 +308,47 @@ class BucketListItemsAPI(MethodView):
                         'message': "Bucketlist has been updated"
                     }
                     return make_response(jsonify(response)), 200
-
-                else:
-                    response = {
-                        'status': 'Fail',
-                        'message':
-                        'You are not authorized to update these resources'
-                    }
-                    return make_response(jsonify(response)), 401
-
             except:
                 response = {
                     'status': 'Fail',
                     'message': 'Some error occured.'
                 }
                 return make_response(jsonify(response)), 400
+
+        else:
+            response = {
+                'status': 'Fail',
+                'message':
+                'You are not authorized to update these resources'
+            }
+            return make_response(jsonify(response)), 401
+
+    def delete(self, id=None, item_id=None):
+        headers = request.headers.get('Authorization')
+        if headers:
+            try:
+                email = User.decode_auth_token(headers)
+                user = User.query.filter_by(email=email).first()
+                item = Items.query.filter_by(
+                    id=item_id).first()
+                if item.bucketlist_id == id:
+                    db.session.delete(item)
+                    db.session.commit()
+                response = {
+                    'status': "Success",
+                    'message': 'Deleted'
+                }
+                return make_response(jsonify(response)), 204
+
+            except:
+                response = {
+                    'status': 'Fail',
+                    'message': 'Some error occurred'
+                }
+                return make_response(jsonify(response)), 400
+        else:
+            response = {
+                'status': 'Fail',
+                'message': 'You are not authorized to delete these resources'
+            }
+            return make_response(jsonify(response)), 401
