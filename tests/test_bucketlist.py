@@ -378,10 +378,7 @@ class BucketListItemsTestCase(BaseTestCase):
 
             # Edit the bucket list
             update_payload = {'name': 'Visit Kampala',
-                              'date_modified': now.isoformat(),
-                              'done': False,
-                              'bucketlist_id': 2
-                              }
+                              'bucketlist_id': 2}
             update_response = self.client.put("v1/bucketlists/2/items/1",
                                               data=json.dumps(update_payload),
                                               headers={
@@ -439,15 +436,14 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
                                            'Authorization': self.test_token
                                        })
 
-            self.assertEqual(response.status_code, 204)
+            self.assertEqual(response.status_code, 404)
 
     def test_get_bucketlists_without_auth(self):
         """
-        Test if a user can get bucketlist items without an authentication\
-        token
+        Test if a user can get bucketlist items without authentication
         """
         with self.client:
-            response = self.client.get("v1/bucketlists",
+            response = self.client.get("v1/bucketlists/",
                                        headers={
                                            'Content-Type': 'application/json'
                                        })
@@ -455,8 +451,7 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
 
     def test_create_bucketlist_items_without_auth(self):
         """
-        Test if a user can create a bucketlist items without an authentication\
-        token
+        Test if a user can create a bucketlist items without an authentication
         """
         with self.client:
             payload = {'name': 'Visit Pretoria'}
@@ -466,7 +461,7 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
             self.assertTrue(data["status"] == "Success")
             self.assertEqual(create_response.status_code, 201)
 
-            response = self.client.post("v1/bucketlists/1/items",
+            response = self.client.post("v1/bucketlists/1/items/",
                                         data=json.dumps(payload),
                                         headers={'Content-Type':
                                                  'application/json'})
@@ -484,7 +479,7 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
             self.assertEqual(create_response.status_code, 201)
 
             response = self.create_bucketlist(self.payload)
-            self.assertEqual(response.status_code, 204)
+            self.assertEqual(response.status_code, 403)
 
     def test_create_existing_bucketlist_items(self):
         """
@@ -527,12 +522,12 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
 
     def test_create_bucketlist_items_without_name(self):
         """
-        Test if a user can create a bucketlist without a name
+        Test if a user can create a bucketlist item without a name
         """
         with self.client:
             payload = {}
 
-            create_response = self.create_bucketlist(self.payload)
+            create_response = self.create_bucketlist(payload)
             data = json.loads(create_response.data.decode())
             self.assertTrue(data["message"] == "Bucketlist has been created")
             self.assertTrue(data["status"] == "Success")
@@ -552,19 +547,15 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
                                         headers={
                                             'Content-Type': 'application/json'
                                         })
-            self.assertEqual(response.status_code, 401)
+            self.assertEqual(response.status_code, 400)
 
     def test_update_non_existing_bucketlist(self):
         """
         Test if a user can update a bucketlist item which does not exist
         """
         with self.client:
-            now = datetime.datetime.now()
             update_payload = {'name': 'Visit Kampala',
-                              'date_modified': now.isoformat(),
-                              'done': False,
-                              'bucketlist_id': 2
-                              }
+                              'done': False}
 
             rv = self.client.put("v1/bucketlists/2/items/1",
                                  data=json.dumps(update_payload),
