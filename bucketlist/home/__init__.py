@@ -1,11 +1,8 @@
 from flask import Blueprint
 
-
-home = Blueprint('home', __name__)
-
-
 from . import views
 
+home = Blueprint('home', __name__)
 
 bucketlist_view = views.BucketlistAPI.as_view('bucketlist_api')
 bucketlist_items_view = views.BucketListItemsAPI.as_view(
