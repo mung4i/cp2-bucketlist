@@ -1,8 +1,10 @@
 import datetime
 
-from flask import request, make_response, jsonify
+from flask import request, make_response, jsonify, url_for
 from flask.views import MethodView
 from flask_jwt import jwt_required
+from flask_restful import reqparse
+from urllib.parse import urljoin
 
 
 from bucketlist import db
@@ -68,61 +70,93 @@ class BucketlistAPI(MethodView):
     def get(self, id=None):
 
         headers = request.headers.get('Authorization')
-        try:
-            email = User.decode_auth_token(headers)
-            user = User.query.filter_by(email=email).first()
+        # Search and Query params
+        parser = reqparse.RequestParser()
+        parser.add_argument('limit', type=int, required=False, location='args')
+        parser.add_argument('q', type=str, required=False, location='args')
+        parser.add_argument(
+            'page', type=int, required=False, location='args')
+        args = parser.parse_args()
+        email = User.decode_auth_token(headers)
+        user = User.query.filter_by(email=email).first()
 
-            if id:
-                bucketlist = Bucketlist.query.filter_by(id=id).first()
-                if not bucketlist:
-                    response = {
-                        'status': 'Fail',
-                        'message': 'The bucketlist does not exist'
-                    }
-                    return make_response(jsonify(response)), 404
-                if user.email == bucketlist.users_email:
-                    response = {
-                        'id': bucketlist.id,
-                        'title': bucketlist.title,
-                        'date_created': bucketlist.date_created,
-                        'date_modified': bucketlist.date_modified
-                    }
-                    return make_response(jsonify(response)), 200
-            else:
-                all_bucketlists = []
-                bucketlists = Bucketlist.query.filter_by(
-                    users_email=user.email)
+        if id:
+            bucketlist = Bucketlist.query.filter_by(id=id).first()
+            if not bucketlist:
+                response = {
+                    'status': 'Fail',
+                    'message': 'The bucketlist does not exist'
+                }
+                return make_response(jsonify(response)), 404
+            if user.email == bucketlist.users_email:
+                response = {
+                    'id': bucketlist.id,
+                    'title': bucketlist.title,
+                    'date_created': bucketlist.date_created,
+                    'date_modified': bucketlist.date_modified
+                }
+                return make_response(jsonify(response)), 200
 
-                if not bucketlists:
-                    response = {
-                        'status': 'Fail',
-                        'message': 'You do not have bucketlists'
-                    }
-                    return make_response(jsonify(response)), 404
-                for bucketlist in bucketlists:
-                    if user.email == bucketlist.users_email:
-                        response = {
-                            'id': bucketlist.id,
-                            'title': bucketlist.title,
-                            'date_created': bucketlist.date_created,
-                            'date_modified': bucketlist.date_modified
-                        }
-                        all_bucketlists.append(response)
-                return make_response(jsonify(all_bucketlists)), 200
-
-        except Exception as e:
-            print(e)
-            response = {
-                'status': 'Fail',
-                'message': 'Some error occurred.'
-            }
-            return make_response(jsonify(response)), 400
         else:
+            all_bucketlists = []
+
+            page = args["page"] or 1
+            limit = args["limit"] or 1
+            query = args["q"] or None
+
+            if query:
+                bucketlists = Bucketlist.query.filter(
+                    Bucketlist.title.ilike('%{}%'.format(query))).filter_by(
+                    users_email=user.email).paginate(
+                    page=page, per_page=limit, error_out=True)
+            else:
+                bucketlists = Bucketlist.query.filter_by(
+                    users_email=user.email).paginate(
+                    page=page, per_page=limit, error_out=True)
+
+            if not bucketlists:
+                response = {
+                    'status': 'Fail',
+                    'message': 'You do not have bucketlists'
+                }
+                return make_response(jsonify(response)), 404
+            for bucketlist in bucketlists.items:
+                response = {
+                    'id': bucketlist.id,
+                    'title': bucketlist.title,
+                    'date_created': bucketlist.date_created,
+                    'date_modified': bucketlist.date_modified
+                }
+                all_bucketlists.append(response)
+
+            if bucketlists.has_next:
+                next_url = (urljoin(
+                    "http://127.0.0.1:5000/v1/bucketlists/",
+                    url_for(request.endpoint,
+                            q=query,
+                            page=bucketlists.next_num,
+                            limit=bucketlists.per_page)))
+            else:
+                next_url = None
+            if bucketlists.has_prev:
+                prev_url = (urljoin(
+                    "http://127.0.0.1:5000/v1/bucketlists/",
+                    url_for(request.endpoint,
+                            page=bucketlists.prev_num,
+                            limit=bucketlists.per_page)))
+            else:
+                prev_url = None
+
             response = {
-                'status': 'Fail',
-                'message': 'You are not authorized to view these resources'
+                "page": bucketlists.page,
+                "pages": bucketlists.pages,
+                "limit": 20,
+                "next_url": next_url,
+                "prev_url": prev_url,
+                "bucketlists": all_bucketlists
             }
-            return make_response(jsonify(response)), 401
+
+            return make_response(jsonify(response)), 200
 
     @jwt_required()
     def delete(self, id):
@@ -271,13 +305,11 @@ class BucketListItemsAPI(MethodView):
                         'done': item.done,
                         'bucketlist_id': item.bucketlist_id
                     }
-                    print(response)
                     return make_response(jsonify(response)), 200
             if id:
                 all_items = []
                 items = Items.query.filter_by(
                     bucketlist_id=id).all()
-                print(items)
                 if not items:
                     response = {
                         "status": "Fail",
