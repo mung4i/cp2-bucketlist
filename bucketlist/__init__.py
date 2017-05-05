@@ -1,8 +1,7 @@
 import os
 
-
 from flask import Flask
-from flask_jwt import JWT, jwt_required, current_identity
+from flask_jwt import JWT
 from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
@@ -35,14 +34,10 @@ def create_app(config_name):
     from bucketlist.models import User
     global jwt
     jwt = JWT(app, User.authenticate, User.identity)
-
     login_manager.init_app(app)
     login_manager.login_message = "You must be logged in to have access"
     login_manager.login_view = "auth.login_api"
-
     migrate = Migrate(app, db)
-
-    # from . import models
 
     from .auth import auth as auth_blueprint
     app.register_blueprint(auth_blueprint)
