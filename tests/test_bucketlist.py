@@ -469,7 +469,6 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
                                            'Content-Type': 'application/json',
                                            'Authorization': self.test_token
                                        })
-
             self.assertEqual(response.status_code, 404)
 
     def test_get_nonexistent_bucketlist(self):
@@ -477,11 +476,14 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
         Test if a user can get a bucketlist which does not exist.
         """
         with self.client:
-            response = self.client.get("v1/bucketlists/10",
+            response = self.client.get("v1/bucketlists/100",
                                        headers={
                                            'Content-Type': 'application/json',
                                            'Authorization': self.test_token
                                        })
+            data = json.loads(response.data.decode())
+            self.assertTrue(data["message"] == "The bucketlist does not exist")
+            self.assertTrue(data["status"] == "Fail")
 
             self.assertEqual(response.status_code, 404)
 
