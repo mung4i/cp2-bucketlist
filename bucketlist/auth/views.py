@@ -1,7 +1,7 @@
 import datetime
 
 from flask import request, make_response, jsonify
-# from flask_login import login_required
+# from flask_login import login_required'
 from flask.views import MethodView
 
 from bucketlist import db
@@ -32,10 +32,11 @@ class RegisterAPI(MethodView):
                 db.session.commit()
 
                 auth_token = user.encode_auth_token(user.id)
+                print(auth_token, type(auth_token))
                 response = {
                     'status': 'Success',
                     'message': 'Successfully registered',
-                    'auth_token': auth_token.decode()
+                    'auth_token': auth_token
                 }
                 return make_response(jsonify(response)), 201
             except Exception as e:
@@ -66,21 +67,28 @@ class LoginAPI(MethodView):
             if not user:
                 response = {
                     'status': 'Failed',
-                    'message': "User is not registered "
+                    'message': "User is not registered"
                 }
-                return make_response(jsonify(response), 401)
-            auth_token = user.encode_auth_token(user.email)
-            if auth_token:
+                return make_response(jsonify(response), 400)
+            password = data.get('password')
+            if user.verify_password(password):
+                auth_token = user.encode_auth_token(user.email)
                 response = {
                     'status': "Success",
                     'message': "Successfully logged in",
-                    "auth_token": auth_token.decode()
+                    "auth_token": auth_token
                 }
                 return make_response(jsonify(response)), 200
+            else:
+                response = {
+                    'status': "Failed",
+                    'message': "User password combination failed to match"
+                }
+                return make_response(jsonify(response)), 400
         except Exception as e:
             print(e)
             response = {
                 'status': 'Failed',
-                'message': 'User password combination failed to match.'
+                'message': 'Some error occured.'
             }
             return make_response(jsonify(response)), 500
