@@ -4,4 +4,4 @@ __pycache__
 *.sqlite
 .idea
 .vscode
-
+.coverage
