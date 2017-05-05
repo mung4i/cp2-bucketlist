@@ -31,14 +31,18 @@ class User(UserMixin, db.Model):
         """
         try:
             payload = {
-                'exp': datetime.now() + timedelta(days=1),
+                'iat': datetime.utcnow(),
+                'nbf': datetime.utcnow(),
+                'exp': datetime.utcnow() + timedelta(days=1),
                 'email': email
             }
-            return jwt.encode(
+            token = jwt.encode(
                 payload,
                 'the-secret-secret-k3y',
                 algorithm='HS256'
             )
+            decoded_token = token.decode()
+            return "JWT " + decoded_token
         except Exception as e:
             return e
 
@@ -48,6 +52,7 @@ class User(UserMixin, db.Model):
         Decodes auth token
         """
         try:
+            auth_token = auth_token.replace("JWT ", '', 1)
             payload = jwt.decode(auth_token, 'the-secret-secret-k3y',
                                  algorithms=['HS256'])
             return payload['email']
@@ -66,6 +71,15 @@ class User(UserMixin, db.Model):
 
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    def authenticate(email, password):
+        user = User.query.filter_by(email).first()
+        if user.verify_password(password):
+            return user
+
+    def identity(payload):
+        email = payload['email']
+        return email
 
     def __repr__(self):
         return "{0}: {1} {2}".format(self.username, self.first_name,
