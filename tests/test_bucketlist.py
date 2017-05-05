@@ -24,7 +24,6 @@ class BaseTestCase(unittest.TestCase):
         query_user = db.session.query(User).filter_by(
             email='test@bucket.com').first()
         self.test_token = self.test_user.encode_auth_token(query_user.email)
-
         self.test_user_a = User(
             email='test_a@bucket.com',
             username='theatester',
@@ -58,6 +57,11 @@ class RegistrationLoginTestCase(BaseTestCase):
         'password': 'password'
     }
 
+    wrong_pass_payload = {
+        'email': 'jailbre3k@gmail.com',
+        'password': 'swordpas'
+    }
+
     def register_user(self, payload):
         return self.client.post("/v1/auth/register",
                                 data=json.dumps(payload),
@@ -75,18 +79,18 @@ class RegistrationLoginTestCase(BaseTestCase):
         with self.client:
             test_user = db.session.query(User).filter_by(
                 email='test@bucket.com').first()
-            auth_token = test_user.encode_auth_token(test_user.id)
-            self.assertTrue(isinstance(auth_token, bytes))
+            auth_token = test_user.encode_auth_token(test_user.email)
+            self.assertTrue(isinstance(auth_token, str))
 
     def test_decode_auth_token(self):
         """
         Test token decoding functionality
         """
         with self.client:
-            auth_token = self.test_user.encode_auth_token(self.test_user.id)
-            self.assertTrue(isinstance(auth_token, bytes))
-            self.assertTrue(User.decode_auth_token(
-                auth_token.decode("UTF-8") == 1))
+            auth_token = self.test_user.encode_auth_token(self.test_user.email)
+            decoded_token = self.test_user.decode_auth_token(auth_token)
+            self.assertTrue(isinstance(auth_token, str))
+            self.assertTrue(isinstance(decoded_token, str))
 
     def test_register_endpoint(self):
         """
@@ -151,9 +155,29 @@ class RegistrationLoginTestCase(BaseTestCase):
             response = self.login_user(self.login_payload)
             data = json.loads(response.data.decode())
             self.assertTrue(data["status"] == 'Failed')
+            self.assertTrue(data["message"] == 'User is not registered')
             self.assertTrue(response.content_type == 'application/json')
-            self.assertEqual(response.status_code, 401,
-                             msg='User not registered')
+            self.assertEqual(response.status_code, 400)
+
+    def test_login_endpoint_for_wrong_password(self):
+        """
+        Test if a user logins with wrong credentials
+        """
+        with self.client:
+            register = self.register_user(self.payload)
+            register_response = json.loads(register.data.decode())
+            self.assertTrue(register_response['message'] ==
+                            "Successfully registered")
+            self.assertEqual(register.status_code, 201)
+
+            # Login
+            response = self.login_user(self.wrong_pass_payload)
+
+            data = json.loads(response.data.decode())
+            self.assertTrue(
+                data['message'] == 'User password combination failed to match')
+            self.assertEqual(response.status_code, 400,
+                             msg=data["message"])
 
 
 class BucketListAPITestCase(BaseTestCase):
@@ -539,25 +563,26 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
         Test if a user can create a bucketlist without a name
         """
         with self.client:
-            payload = {}
+            payload = {"title": ''}
             response = self.create_bucketlist(payload)
-            self.assertEqual(response.status_code, 409)
+            self.assertEqual(response.status_code, 400)
 
     def test_create_bucketlist_items_without_name(self):
         """
         Test if a user can create a bucketlist item without a name
         """
         with self.client:
-            payload = {}
+            create_payload = {"title": ''}
+            payload = {"name": ''}
 
-            create_response = self.create_bucketlist(payload)
+            create_response = self.create_bucketlist(create_payload)
             data = json.loads(create_response.data.decode())
-            self.assertTrue(data["message"] == "Bucketlist has been created")
-            self.assertTrue(data["status"] == "Success")
-            self.assertEqual(create_response.status_code, 201)
+            print(create_response.status_code)
+            self.assertTrue(data["message"] == "Bucketlist name is missing")
+            self.assertTrue(data["status"] == "Fail")
+            self.assertEqual(create_response.status_code, 400)
 
             response = self.create_bucketlist_items(payload)
-
             self.assertEqual(response.status_code, 400)
 
     def test_create_bucketlist_without_authentication(self):
@@ -570,7 +595,7 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
                                         headers={
                                             'Content-Type': 'application/json'
                                         })
-            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.status_code, 401)
 
     def test_update_non_existing_bucketlist(self):
         """
