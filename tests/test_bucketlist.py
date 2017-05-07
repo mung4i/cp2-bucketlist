@@ -359,7 +359,7 @@ class BucketListItemsTestCase(BaseTestCase):
         Test if a user can get bucketlist items
         """
         with self.client:
-            create_response = self.create_bucketlist(self.payload)
+            create_response = self.create_bucketlist(self.create_payload)
             data = json.loads(create_response.data.decode())
             self.assertTrue(data["message"] == "Bucketlist has been created")
             self.assertEqual(create_response.status_code, 201)
@@ -382,7 +382,7 @@ class BucketListItemsTestCase(BaseTestCase):
         Test if a user can delete a bucketlist item
         """
         with self.client:
-            create_response = self.create_bucketlist(self.payload)
+            create_response = self.create_bucketlist(self.create_payload)
             data = json.loads(create_response.data.decode())
             self.assertTrue(data["message"] == "Bucketlist has been created")
             self.assertTrue(data["status"] == "Success")
@@ -409,7 +409,7 @@ class BucketListItemsTestCase(BaseTestCase):
         Test if a user can update a bucketlist item
         """
         with self.client:
-            create_response = self.create_bucketlist(self.payload)
+            create_response = self.create_bucketlist(self.create_payload)
             data = json.loads(create_response.data.decode())
             self.assertTrue(data["message"] == "Bucketlist has been created")
             self.assertTrue(data["status"] == "Success")
@@ -504,8 +504,9 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
         """
         with self.client:
             payload = {'name': 'Visit Pretoria'}
-            create_response = self.create_bucketlist(self.payload)
+            create_response = self.create_bucketlist(self.create_payload)
             data = json.loads(create_response.data.decode())
+            print(data)
             self.assertTrue(data["message"] == "Bucketlist has been created")
             self.assertTrue(data["status"] == "Success")
             self.assertEqual(create_response.status_code, 201)
@@ -521,13 +522,13 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
         Test if a user can create existing bucketlists
         """
         with self.client:
-            create_response = self.create_bucketlist(self.payload)
+            create_response = self.create_bucketlist(self.create_payload)
             data = json.loads(create_response.data.decode())
             self.assertTrue(data["message"] == "Bucketlist has been created")
             self.assertTrue(data["status"] == "Success")
             self.assertEqual(create_response.status_code, 201)
 
-            response = self.create_bucketlist(self.payload)
+            response = self.create_bucketlist(self.create_payload)
             self.assertEqual(response.status_code, 403)
 
     def test_create_existing_bucketlist_items(self):
@@ -537,7 +538,7 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
         with self.client:
             payload = {'name': 'Visit New York'}
 
-            create_response = self.create_bucketlist(self.payload)
+            create_response = self.create_bucketlist(self.create_payload)
             data = json.loads(create_response.data.decode())
             self.assertTrue(data["message"] == "Bucketlist has been created")
             self.assertTrue(data["status"] == "Success")
@@ -574,17 +575,18 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
         Test if a user can create a bucketlist item without a name
         """
         with self.client:
-            create_payload = {"title": ''}
             payload = {"name": ''}
 
-            create_response = self.create_bucketlist(create_payload)
+            create_response = self.create_bucketlist(self.create_payload)
             data = json.loads(create_response.data.decode())
-            print(create_response.status_code)
-            self.assertTrue(data["message"] == "Bucketlist name is missing")
-            self.assertTrue(data["status"] == "Fail")
-            self.assertEqual(create_response.status_code, 400)
+            self.assertTrue(data["message"] == "Bucketlist has been created")
+            self.assertTrue(data["status"] == "Success")
+            self.assertEqual(create_response.status_code, 201)
 
             response = self.create_bucketlist_items(payload)
+            data = json.loads(response.data.decode())
+            self.assertTrue(data["message"] == "Required fields are empty.")
+            self.assertTrue(data["status"] == "Bad request")
             self.assertEqual(response.status_code, 400)
 
     def test_create_bucketlist_without_authentication(self):
@@ -622,7 +624,7 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
         with self.client:
             payload = {'name': 'Visit New York'}
 
-            create_response = self.create_bucketlist(self.payload)
+            create_response = self.create_bucketlist(self.create_payload)
             data = json.loads(create_response.data.decode())
             self.assertTrue(data["message"] == "Bucketlist has been created")
             self.assertTrue(data["status"] == "Success")
