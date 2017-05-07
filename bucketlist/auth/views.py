@@ -6,6 +6,7 @@ from flask.views import MethodView
 
 from bucketlist import db
 from bucketlist.models import User
+from ..decorators import validate_user_credentials
 
 
 class RegisterAPI(MethodView):
@@ -13,7 +14,7 @@ class RegisterAPI(MethodView):
     """
         Register users
     """
-
+    @validate_user_credentials
     def post(self):
         data = request.get_json()
 
