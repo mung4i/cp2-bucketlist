@@ -9,6 +9,7 @@ from urllib.parse import urljoin
 
 from bucketlist import db
 from bucketlist.models import User, Bucketlist, Items
+from ..decorators import validate_bucketlist_data, validate_bucketlist_data_items
 
 
 class BucketlistAPI(MethodView):
@@ -20,18 +21,12 @@ class BucketlistAPI(MethodView):
     now = datetime.datetime.now()
 
     @jwt_required()
+    @validate_bucketlist_data
     def post(self):
         data = request.get_json()
         headers = request.headers.get('Authorization')
         bucketlist = Bucketlist.query.filter_by(
             title=data.get('title')).first()
-
-        if data.get('title') is '':
-            response = {
-                'status': "Fail",
-                'message': "Bucketlist name is missing"
-            }
-            return make_response(jsonify(response)), 400
 
         if not bucketlist:
             email = User.decode_auth_token(headers)
@@ -211,6 +206,7 @@ class BucketListItemsAPI(MethodView):
     now = datetime.datetime.now()
 
     @jwt_required()
+    @validate_bucketlist_data_items
     def post(self, id):
         data = request.get_json()
         headers = request.headers.get('Authorization')
