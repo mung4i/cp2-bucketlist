@@ -52,7 +52,7 @@ class BucketlistAPI(MethodView):
                 'status': 'Fail',
                 'message': 'Bucketlist already exists.'
             }
-            return make_response(jsonify(response)), 403
+            return make_response(jsonify(response)), 409
 
     @jwt_required()
     def get(self, id=None):
@@ -171,11 +171,8 @@ class BucketlistAPI(MethodView):
                 if id == bucketlist.id:
                     db.session.delete(bucketlist)
                     db.session.commit()
-            response = {
-                'status': "Success",
-                'message': 'Deleted'
-            }
-            return make_response(jsonify(response)), 204
+
+            return 204
         else:
             response = {
                 'status': 'Fail',
@@ -253,7 +250,7 @@ class BucketListItemsAPI(MethodView):
                 'status': 'Fail',
                 'message': 'Bucketlist already exists.'
             }
-            return make_response(jsonify(response)), 403
+            return make_response(jsonify(response)), 409
 
     @jwt_required()
     def get(self, id, item_id=None):
@@ -337,11 +334,8 @@ class BucketListItemsAPI(MethodView):
         if item.bucketlist_id == id:
             db.session.delete(item)
             db.session.commit()
-            response = {
-                'status': "Success",
-                'message': 'Deleted'
-            }
-            return make_response(jsonify(response)), 204
+
+            return 204
         else:
             response = {
                 'status': 'Fail',
