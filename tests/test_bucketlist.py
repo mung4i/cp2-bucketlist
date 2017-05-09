@@ -103,7 +103,6 @@ class RegistrationLoginTestCase(BaseTestCase):
             data = json.loads(response.data.decode())
             self.assertTrue(data["status"] == "Success")
             self.assertTrue(data["message"] == "Successfully registered")
-            self.assertTrue(data["auth_token"])
             self.assertEqual(response.status_code, 201,
                              msg=data["message"])
 
