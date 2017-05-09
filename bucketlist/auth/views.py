@@ -1,7 +1,6 @@
 import datetime
 
 from flask import request, make_response, jsonify
-# from flask_login import login_required'
 from flask.views import MethodView
 
 from bucketlist import db
@@ -31,12 +30,9 @@ class RegisterAPI(MethodView):
             db.session.add(user)
             db.session.commit()
 
-            auth_token = user.encode_auth_token(user.id)
-            print(auth_token, type(auth_token))
             response = {
                 'status': 'Success',
-                'message': 'Successfully registered',
-                'auth_token': auth_token
+                'message': 'Successfully registered'
             }
             return make_response(jsonify(response)), 201
         else:
