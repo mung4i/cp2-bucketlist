@@ -1,15 +1,16 @@
 import datetime
+from urllib.parse import urljoin
 
 from flask import request, make_response, jsonify, url_for
 from flask.views import MethodView
 from flask_jwt import jwt_required
 from flask_restful import reqparse
-from urllib.parse import urljoin
 
 
 from bucketlist import db
 from bucketlist.models import User, Bucketlist, Items
-from ..decorators import validate_bucketlist_data, validate_bucketlist_data_items
+from ..decorators import\
+    validate_bucketlist_data, validate_bucketlist_data_items
 
 
 class BucketlistAPI(MethodView):
@@ -24,12 +25,12 @@ class BucketlistAPI(MethodView):
     @validate_bucketlist_data
     def post(self):
         data = request.get_json()
-        headers = request.headers.get('Authorization')
+        token = request.headers.get('Authorization')
         bucketlist = Bucketlist.query.filter_by(
             title=data.get('title')).first()
 
         if not bucketlist:
-            email = User.decode_auth_token(headers)
+            email = User.decode_auth_token(token)
             user = User.query.filter_by(email=email).first()
             create = Bucketlist(
                 title=data.get('title'),
@@ -56,7 +57,7 @@ class BucketlistAPI(MethodView):
     @jwt_required()
     def get(self, id=None):
 
-        headers = request.headers.get('Authorization')
+        token = request.headers.get('Authorization')
         # Search and Query params
         parser = reqparse.RequestParser()
         parser.add_argument('limit', type=int, required=False, location='args')
@@ -65,10 +66,11 @@ class BucketlistAPI(MethodView):
             'page', type=int, required=False, location='args')
         args = parser.parse_args()
 
-        email = User.decode_auth_token(headers)
+        email = User.decode_auth_token(token)
         user = User.query.filter_by(email=email).first()
 
         if id:
+
             bucketlist = Bucketlist.query.filter_by(id=id).first()
             if not bucketlist:
                 response = {
@@ -77,9 +79,20 @@ class BucketlistAPI(MethodView):
                 }
                 return make_response(jsonify(response)), 404
             if user.email == bucketlist.users_email:
+                all_items = []
+                for item in bucketlist.items:
+                    item_response = {
+                        'id': item.id,
+                        'name': item.name,
+                        'date_created': item.date_created,
+                        'date_modified': item.date_modified,
+                        'done': item.done
+                    }
+                    all_items.append(item_response)
                 response = {
                     'id': bucketlist.id,
                     'title': bucketlist.title,
+                    'items': all_items,
                     'date_created': bucketlist.date_created,
                     'date_modified': bucketlist.date_modified
                 }
@@ -148,9 +161,9 @@ class BucketlistAPI(MethodView):
 
     @jwt_required()
     def delete(self, id):
-        headers = request.headers.get('Authorization')
-        if headers:
-            email = User.decode_auth_token(headers)
+        token = request.headers.get('Authorization')
+        if token:
+            email = User.decode_auth_token(token)
             user = User.query.filter_by(email=email).first()
             bucketlists = Bucketlist.query.filter_by(
                 users_email=user.email).all()
@@ -171,32 +184,33 @@ class BucketlistAPI(MethodView):
             return make_response(jsonify(response)), 401
 
     @jwt_required()
+    @validate_bucketlist_data
     def put(self, id):
         data = request.get_json()
-        headers = request.headers.get('Authorization')
-        if headers:
-            email = User.decode_auth_token(headers)
-            user = User.query.filter_by(email=email).first()
-            bucketlists = Bucketlist.query.filter_by(
-                users_email=user.email).all()
+        token = request.headers.get('Authorization')
+        email = User.decode_auth_token(token)
+        user = User.query.filter_by(email=email).first()
+        bucketlist = Bucketlist.query.filter_by(
+            id=id).first()
 
-            for bucketlist in bucketlists:
-                if user.email == bucketlist.users_email:
-                    bucketlist.title = data.get('title')
-                    bucketlist.date_modified = self.now
-                    db.session.commit()
-                response = {
-                    'status': "Success",
-                    'message': "Bucketlist has been updated"
-                }
-                return make_response(jsonify(response)), 200
-            else:
-                response = {
-                    'status': 'Fail',
-                    'message':
-                    'You are not authorized to update these resources'
-                }
-                return make_response(jsonify(response)), 401
+        if token and user.email == bucketlist.users_email:
+            bucketlist.title = data.get('title')
+            bucketlist.date_modified = self.now
+
+            db.session.commit()
+
+            response = {
+                'status': "Success",
+                'message': "Bucketlist has been updated"
+            }
+            return make_response(jsonify(response)), 200
+        else:
+            response = {
+                'status': 'Fail',
+                'message':
+                'You are not authorized to update these resources'
+            }
+            return make_response(jsonify(response)), 401
 
 
 class BucketListItemsAPI(MethodView):
@@ -209,18 +223,13 @@ class BucketListItemsAPI(MethodView):
     @validate_bucketlist_data_items
     def post(self, id):
         data = request.get_json()
-        headers = request.headers.get('Authorization')
+        token = request.headers.get('Authorization')
         items = Items.query.filter_by(
             name=data.get('name')).first()
+        bucketlist = Bucketlist.query.filter_by(id=id).first()
 
-        if data.get('name') is '':
-            response = {
-                'status': "Fail",
-                'message': "Bucketlist name is missing"
-            }
-            return make_response(jsonify(response)), 400
         if not items:
-            email = User.decode_auth_token(headers)
+            email = User.decode_auth_token(token)
             user = User.query.filter_by(email=email).first()
             if User.decode_auth_token(user.email):
                 create = Items(
@@ -228,7 +237,7 @@ class BucketListItemsAPI(MethodView):
                     date_created=self.now,
                     date_modified=self.now,
                     done=False,
-                    bucketlist_id=id)
+                    bucketlist_id=bucketlist.id)
                 db.session.add(create)
                 db.session.commit()
 
@@ -248,8 +257,8 @@ class BucketListItemsAPI(MethodView):
 
     @jwt_required()
     def get(self, id, item_id=None):
-        headers = request.headers.get('Authorization')
-        email = User.decode_auth_token(headers)
+        token = request.headers.get('Authorization')
+        email = User.decode_auth_token(token)
         user = User.query.filter_by(email=email).first()
         if item_id:
             item = Items.query.filter_by(
@@ -298,6 +307,7 @@ class BucketListItemsAPI(MethodView):
             return make_response(jsonify(response)), 401
 
     @jwt_required()
+    @validate_bucketlist_data_items
     def put(self, id=None, item_id=None):
         data = request.get_json()
         item = Items.query.filter_by(
