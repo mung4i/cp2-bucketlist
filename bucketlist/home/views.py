@@ -171,8 +171,11 @@ class BucketlistAPI(MethodView):
                 if id == bucketlist.id:
                     db.session.delete(bucketlist)
                     db.session.commit()
-
-            return 204
+            response = {
+                'status': "Success",
+                'message': 'Deleted'
+            }
+            return make_response(jsonify(response)), 204
         else:
             response = {
                 'status': 'Fail',
@@ -334,8 +337,11 @@ class BucketListItemsAPI(MethodView):
         if item.bucketlist_id == id:
             db.session.delete(item)
             db.session.commit()
-
-            return 204
+            response = {
+                'status': "Success",
+                'message': 'Deleted'
+            }
+            return make_response(jsonify(response)), 204
         else:
             response = {
                 'status': 'Fail',
