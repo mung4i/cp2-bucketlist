@@ -528,7 +528,7 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
             self.assertEqual(create_response.status_code, 201)
 
             response = self.create_bucketlist(self.create_payload)
-            self.assertEqual(response.status_code, 403)
+            self.assertEqual(response.status_code, 409)
 
     def test_create_existing_bucketlist_items(self):
         """
@@ -558,7 +558,7 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
                                             'Content-Type': 'application/json',
                                             'Authorization': self.test_token
                                         })
-            self.assertEqual(response.status_code, 403)
+            self.assertEqual(response.status_code, 409)
 
     def test_create_bucketlist_without_name(self):
         """
