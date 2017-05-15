@@ -1,8 +1,19 @@
-from flask import Blueprint
+from flask import Blueprint, request
 from flask_restful import Api
 
 
+def add_cors_headers(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    if request.method == 'OPTIONS':
+        response.headers['Access-Control-Allow-Methods'] = 'DELETE, GET, POST, PUT'
+        headers = request.headers.get('Access-Control-Request-Headers')
+        if headers:
+            response.headers['Access-Control-Allow-Headers'] = headers
+    return response
+
+
 auth = Blueprint('auth', __name__)
+auth.after_request(add_cors_headers)
 api = Api(auth)
 
 
