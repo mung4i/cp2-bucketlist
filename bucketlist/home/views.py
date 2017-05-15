@@ -19,8 +19,6 @@ class BucketlistAPI(MethodView):
         All things buckelist(Create, Get, Update, Delete)
     """
 
-    now = datetime.datetime.now()
-
     @jwt_required()
     @validate_bucketlist_data
     def post(self):
@@ -34,8 +32,8 @@ class BucketlistAPI(MethodView):
             user = User.query.filter_by(email=email).first()
             create = Bucketlist(
                 title=data.get('title'),
-                date_created=self.now,
-                date_modified=self.now,
+                date_created=datetime.datetime.now(),
+                date_modified=datetime.datetime.now(),
                 users_email=user.email)
 
             db.session.add(create)
@@ -195,7 +193,7 @@ class BucketlistAPI(MethodView):
 
         if token and user.email == bucketlist.users_email:
             bucketlist.title = data.get('title')
-            bucketlist.date_modified = self.now
+            bucketlist.date_modified = datetime.datetime.now()
 
             db.session.commit()
 
@@ -217,7 +215,6 @@ class BucketListItemsAPI(MethodView):
     """
     Create, Get, Update, Delete BucketListItems
     """
-    now = datetime.datetime.now()
 
     @jwt_required()
     @validate_bucketlist_data_items
@@ -234,8 +231,8 @@ class BucketListItemsAPI(MethodView):
             if User.decode_auth_token(user.email):
                 create = Items(
                     name=data.get('name'),
-                    date_created=self.now,
-                    date_modified=self.now,
+                    date_created=datetime.datetime.now(),
+                    date_modified=datetime.datetime.now(),
                     done=False,
                     bucketlist_id=bucketlist.id)
                 db.session.add(create)
@@ -314,7 +311,7 @@ class BucketListItemsAPI(MethodView):
             id=item_id).first()
         if item:
             item.name = data.get('name')
-            item.date_modified = self.now
+            item.date_modified = datetime.datetime.now()
             db.session.commit()
             response = {
                 'status': "Success",
