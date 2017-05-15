@@ -1,8 +1,21 @@
-from flask import Blueprint
+from flask import Blueprint, request
 
 from . import views
 
+
+def add_cors_headers(response):
+    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:8000')
+    if request.method == 'OPTIONS':
+        response.headers[
+            'Access-Control-Allow-Methods'] = 'DELETE, GET, POST, PUT'
+        headers = request.headers.get('Access-Control-Request-Headers')
+        if headers:
+            response.headers['Access-Control-Allow-Headers'] = headers
+    return response
+
+
 home = Blueprint('home', __name__)
+home.after_request(add_cors_headers)
 
 bucketlist_view = views.BucketlistAPI.as_view('bucketlist_api')
 bucketlist_items_view = views.BucketListItemsAPI.as_view(
@@ -24,12 +37,12 @@ home.add_url_rule(
     methods=['POST']
 )
 home.add_url_rule(
-    '/v1/bucketlists/<int:id>/items/<int:item_id>',
+    '/v1/bucketlists/<int:id>/items/<int:item_id>/',
     view_func=bucketlist_items_view,
     methods=['GET', 'PUT', 'DELETE']
 )
 home.add_url_rule(
-    '/v1/bucketlists/<int:id>/items',
+    '/v1/bucketlists/<int:id>/items/',
     view_func=bucketlist_items_view,
     methods=['GET']
 )
