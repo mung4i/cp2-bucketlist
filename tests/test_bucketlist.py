@@ -368,7 +368,7 @@ class BucketListItemsTestCase(BaseTestCase):
             self.assertTrue(data["status"] == "Success")
             self.assertEqual(response.status_code, 201)
 
-            get_response = self.client.get("v1/bucketlists/1/items/1",
+            get_response = self.client.get("v1/bucketlists/1/items/1/",
                                            headers={
                                                'Content-Type':
                                                'application/json',
@@ -394,7 +394,7 @@ class BucketListItemsTestCase(BaseTestCase):
                 data["message"] == "Bucketlist item has been created")
             self.assertEqual(create_response.status_code, 201)
 
-            response = self.client.delete("v1/bucketlists/1/items/1",
+            response = self.client.delete("v1/bucketlists/1/items/1/",
                                           data=json.dumps(self.payload),
                                           headers={
                                               'Content-Type':
@@ -425,7 +425,7 @@ class BucketListItemsTestCase(BaseTestCase):
             # Edit the bucket list
             update_payload = {'name': 'Visit Kampala',
                               'bucketlist_id': 2}
-            update_response = self.client.put("v1/bucketlists/1/items/1",
+            update_response = self.client.put("v1/bucketlists/1/items/1/",
                                               data=json.dumps(update_payload),
                                               headers={
                                                   'Content-Type':
@@ -608,7 +608,7 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
             update_payload = {'name': 'Visit Kampala',
                               'done': False}
 
-            response = self.client.put("v1/bucketlists/2/items/1",
+            response = self.client.put("v1/bucketlists/2/items/1/",
                                        data=json.dumps(update_payload),
                                        headers={
                                            'Content-Type': 'application/json',
@@ -635,7 +635,7 @@ class BucketListAPIEdgeTestCase(BaseTestCase):
 
             update_payload = {'name': 'Visit Boston'}
 
-            response = self.client.put("v1/bucketlists/1/items/1",
+            response = self.client.put("v1/bucketlists/1/items/1/",
                                        data=json.dumps(update_payload),
                                        headers={
                                            'Content-Type': 'application/json',
