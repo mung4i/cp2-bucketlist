@@ -8,7 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_restful import Api
 
 
-from config import app_config
+from bucketlist.config import app_config
 
 db = SQLAlchemy()
 login_manager = LoginManager()
