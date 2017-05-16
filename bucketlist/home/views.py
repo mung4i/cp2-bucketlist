@@ -2,6 +2,7 @@ import datetime
 from urllib.parse import urljoin
 
 from flask import request, make_response, jsonify, url_for
+from flask import current_app as app
 from flask.views import MethodView
 from flask_jwt import jwt_required
 from flask_restful import reqparse
@@ -11,7 +12,6 @@ from bucketlist import db
 from bucketlist.models import User, Bucketlist, Items
 from ..decorators import\
     validate_bucketlist_data, validate_bucketlist_data_items
-from config import BASE_URL
 
 
 class BucketlistAPI(MethodView):
@@ -131,7 +131,7 @@ class BucketlistAPI(MethodView):
 
             if bucketlists.has_next:
                 next_url = (urljoin(
-                    BASE_URL + "/v1/bucketlists/",
+                    app.config.get('BASE_URL') + "/v1/bucketlists/",
                     url_for(request.endpoint,
                             q=query,
                             page=bucketlists.next_num,
@@ -140,7 +140,7 @@ class BucketlistAPI(MethodView):
                 next_url = None
             if bucketlists.has_prev:
                 prev_url = (urljoin(
-                    BASE_URL + "/v1/bucketlists/",
+                    app.config.get('BASE_URL') + "/v1/bucketlists/",
                     url_for(request.endpoint,
                             page=bucketlists.prev_num,
                             limit=bucketlists.per_page)))
