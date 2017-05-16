@@ -25,12 +25,13 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = 'sqlite:////' + basedir + '/bucketlist' + \
         '/bucketlist.sqlite'
+    BASE_URL = "http://localhost:8000"
 
 
 class ProductionConfig(Config):
     DEBUG = False
     SQLALCHEMY_ECHO = False
-
+    BASE_URL = "https://cp2-bucketlist.herokuapp.com"
 
 app_config = {
     'development': DevelopmentConfig,
