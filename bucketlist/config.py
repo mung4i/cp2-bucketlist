@@ -25,14 +25,13 @@ class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_ECHO = False
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_DATABASE_URI = 'sqlite:////' + \
-        os.path.join(basedir, 'bucketlist.sqlite')
+    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:@localhost/bucketlist_db'
     BASE_URL = "http://127.0.0.1:5000/"
     FRONTEND_URL = "http://localhost:8000"
 
 
 class ProductionConfig(Config):
-    DEBUG = False
+    DEBUG = True
     SQLALCHEMY_ECHO = False
     BASE_URL = "https://cp2-bucketlist.herokuapp.com"
 
