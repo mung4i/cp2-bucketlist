@@ -8,6 +8,7 @@ class Config(object):
     My configs
     """
     CSRF_ENABLED = True
+    SECRET_KEY = os.getenv('SECRET_KEY', 'the-secret-secret-k3y')
 
 
 class TestingConfig(Config):
@@ -17,6 +18,7 @@ class TestingConfig(Config):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + \
         os.path.join(basedir, 'bucketlist_test.sqlite')
+    SECRET_KEY = os.getenv('SECRET_KEY', 'the-secret-secret-k3y')
 
 
 class DevelopmentConfig(Config):
