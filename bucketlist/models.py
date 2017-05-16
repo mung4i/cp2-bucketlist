@@ -1,3 +1,5 @@
+import os
+
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
@@ -38,7 +40,7 @@ class User(UserMixin, db.Model):
             }
             token = jwt.encode(
                 payload,
-                'the-secret-secret-k3y',
+                os.getenv('SECRET_KEY'),
                 algorithm='HS256'
             )
             decoded_token = token.decode()
@@ -53,7 +55,7 @@ class User(UserMixin, db.Model):
         """
         try:
             auth_token = auth_token.replace("JWT ", '', 1)
-            payload = jwt.decode(auth_token, 'the-secret-secret-k3y',
+            payload = jwt.decode(auth_token, os.getenv('SECRET_KEY'),
                                  algorithms=['HS256'])
             return payload['email']
         except jwt.ExpiredSignatureError:
