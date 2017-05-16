@@ -11,6 +11,7 @@ from bucketlist import db
 from bucketlist.models import User, Bucketlist, Items
 from ..decorators import\
     validate_bucketlist_data, validate_bucketlist_data_items
+from config import BASE_URL
 
 
 class BucketlistAPI(MethodView):
@@ -130,7 +131,7 @@ class BucketlistAPI(MethodView):
 
             if bucketlists.has_next:
                 next_url = (urljoin(
-                    "http://127.0.0.1:5000/v1/bucketlists/",
+                    BASE_URL + "/v1/bucketlists/",
                     url_for(request.endpoint,
                             q=query,
                             page=bucketlists.next_num,
@@ -139,7 +140,7 @@ class BucketlistAPI(MethodView):
                 next_url = None
             if bucketlists.has_prev:
                 prev_url = (urljoin(
-                    "http://127.0.0.1:5000/v1/bucketlists/",
+                    BASE_URL + "/v1/bucketlists/",
                     url_for(request.endpoint,
                             page=bucketlists.prev_num,
                             limit=bucketlists.per_page)))
