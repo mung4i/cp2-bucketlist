@@ -1,10 +1,9 @@
 from flask import Blueprint, request
-# from flask import current_app as app
 from flask_restful import Api
 
 
 def add_cors_headers(response):
-    response.headers.add('Access-Control-Allow-Origin', 'https://cp2-frontend.herokuapp.com')
+    response.headers.add('Access-Control-Allow-Origin', '*')
     if request.method == 'OPTIONS':
         response.headers[
             'Access-Control-Allow-Methods'] = 'DELETE, GET, POST, PUT'
