@@ -5,7 +5,7 @@ from . import views
 
 def add_cors_headers(response):
     response.headers.add(
-        'Access-Control-Allow-Origin', app.config.get('FRONTEND_URL'))
+        'Access-Control-Allow-Origin', '*')
     if request.method == 'OPTIONS':
         response.headers[
             'Access-Control-Allow-Methods'] = 'DELETE, GET, POST, PUT'
