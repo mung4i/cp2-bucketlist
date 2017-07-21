@@ -1,0 +1,7 @@
+instance
+*.pyc
+__pycache__
+*.sqlite
+.idea
+.vscode
+.coverage
