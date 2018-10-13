@@ -23,27 +23,27 @@ bucketlist_items_view = views.BucketListItemsAPI.as_view(
     'bucketlist_items_api')
 
 home.add_url_rule(
-    '/v1/bucketlists/',
+    '/v1/bucketlist/',
     view_func=bucketlist_view,
     methods=['POST', 'GET']
 )
 home.add_url_rule(
-    '/v1/bucketlists/<int:id>',
+    '/v1/bucketlist/<int:id>',
     view_func=bucketlist_view,
     methods=['PUT', 'DELETE', 'GET']
 )
 home.add_url_rule(
-    '/v1/bucketlists/<int:id>/items/',
+    '/v1/bucketlist/<int:id>/items/',
     view_func=bucketlist_items_view,
     methods=['POST']
 )
 home.add_url_rule(
-    '/v1/bucketlists/<int:id>/items/<int:item_id>/',
+    '/v1/bucketlist/<int:id>/items/<int:item_id>/',
     view_func=bucketlist_items_view,
     methods=['GET', 'PUT', 'DELETE']
 )
 home.add_url_rule(
-    '/v1/bucketlists/<int:id>/items/',
+    '/v1/bucketlist/<int:id>/items/',
     view_func=bucketlist_items_view,
     methods=['GET']
 )

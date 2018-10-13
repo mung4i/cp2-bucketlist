@@ -15,14 +15,14 @@ The following are the API endpoints:-
 | ------------------------------            |:-------------------------------: |
 | POST /v1/auth/login                          | Logs a user in                   |
 | POST /v1/auth/register                       | Register a new user              |
-| POST /v1/bucketlists/                         | Create a new bucket list         |
-| GET /v1/bucketlists/                         | List all bucketlists for currently logged in user|
-| GET /v1/bucketlists/`<id>`                 | Fetches a single bucketlist      |
-| PUT /v1/bucketlists/`<id>`                    | Update a bucketlist              |
-| DELETE /v1/bucketlists/`<id>`                  | Delete a single bucket list      |
-| POST /v1/bucketlists/`<id>`/items/             | Create a new bucketlist item     |
+| POST /v1/bucketlist/                         | Create a new bucket list         |
+| GET /v1/bucketlist/                         | List all bucketlists for currently logged in user|
+| GET /v1/bucketlist/`<id>`                 | Fetches a single bucketlist      |
+| PUT /v1/bucketlist/`<id>`                    | Update a bucketlist              |
+| DELETE /v1/bucketlist/`<id>`                  | Delete a single bucket list      |
+| POST /v1/bucketlist/`<id>`/items/             | Create a new bucketlist item     |
 | PUT /v1/bucketlists/`<id>`/items/`<item_id>`/     | Updates a bucketlist item        |
-| DELETE /v1/bucketlists/`<id>`/items/`<item_id/`>  | Deletes a bucketlist item        |
+| DELETE /v1/bucketlist/`<id>`/items/`<item_id/`>  | Deletes a bucketlist item        |
 
 ## Run the server
   5. Next is to start the server with the command `python run.py`
