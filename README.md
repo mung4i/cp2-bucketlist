@@ -21,7 +21,7 @@ The following are the API endpoints:-
 | PUT /v1/bucketlist/`<id>`                    | Update a bucketlist              |
 | DELETE /v1/bucketlist/`<id>`                  | Delete a single bucket list      |
 | POST /v1/bucketlist/`<id>`/items/             | Create a new bucketlist item     |
-| PUT /v1/bucketlists/`<id>`/items/`<item_id>`/     | Updates a bucketlist item        |
+| PUT /v1/bucketlist/`<id>`/items/`<item_id>`/     | Updates a bucketlist item        |
 | DELETE /v1/bucketlist/`<id>`/items/`<item_id/`>  | Deletes a bucketlist item        |
 
 ## Run the server
